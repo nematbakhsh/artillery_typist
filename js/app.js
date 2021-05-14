@@ -15,7 +15,7 @@ window.onload = function()
                 gravity: {
                     //y: 100
                 },
-                debug: true      // change it to false in production mode
+                //debug: true      // change it to false in production mode
             }
         }
     };

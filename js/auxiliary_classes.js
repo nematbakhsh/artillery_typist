@@ -24,14 +24,12 @@ class AlignGrid {
         this.cellWidth = this.width / this.cols;
         this.cellHeight = this.height / this.rows;
     }
-
-    
-
+b
     //mostly for planning and debugging this will
     //create a visual representation of the grid
     show(a = 1) {
-        this.graphics = this.scene.add.graphics();
-        this.graphics.lineStyle(4, 0xff0000, a);
+        this.graphics = this.scene.add.graphics().setDepth(99);
+        this.graphics.lineStyle(1, 0xff0000, a);
         //
         //
         //this.graphics.beginPath();
@@ -64,7 +62,7 @@ class AlignGrid {
             for (var j = 0; j < this.cols; j++) {
                 var numText = this.scene.add.text(0, 0, n, {
                     color: 'red'
-                });
+                }).setDepth(99);
                 numText.setOrigin(0.5, 0.5);
                 this.placeAt(j, i, numText);
                 n++;

@@ -5,53 +5,51 @@ class SceneMain extends Phaser.Scene {
 
     preload()
     {
-        this.level = 1;
-        this.lives = 3;
-        this.maxBombs = 2;
-        this.groupBombs = this.physics.add.group();
-        this.switchPhysics = true;
-    }
-
-    create ()
-    {
-        this.input.on('pointerdown', function() {
-            if (this.switchPhysics) {
-                this.switchPhysics = false;
-                this.physics.pause();
-            } else {
-                this.switchPhysics = true;
-                this.physics.resume();
-            }
-            
-        }, this);
-        let width = this.cameras.main.width;
-        let height = this.cameras.main.height;
-
         // create grid for alignment
+        //
         this.grid = new AlignGrid({
             scene: this,
             cols:15,
             rows:9
         });
-        this.grid.showNumbers(); // remove this in production
+        //this.grid.showNumbers(); // remove this in production
+        
+        // game settings
+        this.level = 1;
+        this.lives = 3;
+        this.maxBombs = 5;
+        this.isPausedPhysics = false;
+        this.initialSpeed = 50;
 
+        this.bombNumber = 0;
+        this.isBombDropped = true;
+    }
+
+    create ()
+    {
         // add sprites sky, ground, airplane and life hearts
-        this.sky = this.add.image(width/2, height/2, 'sky');
-        this.ground = this.add.tileSprite(0, this.grid.height - this.grid.cellHeight, this.grid.width, this.grid.cellHeight, 'ground').setOrigin(0, 0);
+        //
+        this.sky = this.add.graphics();
+        this.sky.fillGradientStyle(0x3333ff, 0x3333ff, 0xffffff, 0xffffff);
+        this.sky.fillRect(0,0,  this.grid.width, this.grid.height)
+        //
+        this.ground = this.add.tileSprite(0, this.grid.height - 2 * this.grid.cellHeight, this.grid.width, 2 * this.grid.cellHeight, 'ground').setOrigin(0, 0);
+        this.ground.setScale(1, 2*this.grid.cellHeight/128);
         this.ground.depth = 1;
         this.physics.add.existing(this.ground, true);
-        this.ground.body.setSize(this.grid.width, 10, this.grid.cellHeight, 0);
-        console.log(this.grid.width, this.grid.height);
-
-        this.life1 = this.add.image(0,0,'heart');
-        this.life2 = this.add.image(0,0,'heart');
-        this.life3 = this.add.image(0,0,'heart');
+        this.ground.body.setOffset(0, this.grid.cellHeight * .4);
+        this.ground.body.setSize(this.grid.width, 20, false);
+        //
+        this.life1 = this.add.image(0,0,'heart').setScale(Math.min((this.grid.cellWidth/2)/32, (this.grid.cellHeight/2)/32));
+        this.life2 = this.add.image(0,0,'heart').setScale(Math.min((this.grid.cellWidth/2)/32, (this.grid.cellHeight/2)/32));
+        this.life3 = this.add.image(0,0,'heart').setScale(Math.min((this.grid.cellWidth/2)/32, (this.grid.cellHeight/2)/32));
         this.grid.placeAtIndex(12, this.life1);
         this.grid.placeAtIndex(13, this.life2);
         this.grid.placeAtIndex(14, this.life3);
-  
-        this.aircraft = this.physics.add.image(this.grid.width+200, this.grid.cellHeight, 'aircraft').setScale(0.1, 0.1);
-    
+        //
+        this.aircraft = this.physics.add.image(this.grid.width+200, this.grid.cellHeight, 'aircraft');
+        this.aircraft.setScale(Math.min((this.grid.cellWidth)/800, (this.grid.cellHeight)/469));
+        //v
         this.anims.create({
             key: 'explode',
             frames: this.anims.generateFrameNumbers('explosion', { start: 0, end: 11 }),
@@ -70,100 +68,111 @@ class SceneMain extends Phaser.Scene {
             
         // start level
         //
-        //
         this.switchLevel = false;
         this.level_initiate(this.level);
-            
-        
-    
-        this.input.keyboard.on('keyup', function(event) {
-            for (let i = 0; i < bombs.length; i++) {
-                if (bombs[i][0].letter == event.key) {
-                    bombs[i][0].destroy();
-                    bombs[i][1].destroy();
-                    bombs.splice(i, 1);
-                    this.winSound.play();
+        //
+        // keyboard inputs to destroy bombs
+        this.input.keyboard.on('keydown', function(event) {
+            if (!this.isPausedPhysics) {
+                for (let i = 0; i < bombs.length; i++) {
+                    if (bombs[i][0].letter == event.key) {
+                        bombs[i][0].destroy();
+                        bombs[i][1].destroy();
+                        bombs.splice(i, 1);
+                        this.winSound.play();
+                    }
                 }
             }
         }, this);
 
-        this.events.on('pause', function() {
-            //this.buttonPlayAgain =  this.add.text(-100,-100,'Play Again').setInteractive().setVisible(true);
-            //this.grid.placeAtIndex(67, this.buttonPlayAgain);
-            //console.log(this.buttonPlayAgain);
-            //this.buttonPlayAgain.on('pointerdown', function() {
-            //    console.log('clicked');
-            //    this.scene.start('SceneMain');
-            //    this.scene.run('SceneMain');
-            //    }, this);
-            //}, this)  
-            //this.scene.resume();
-            this.scene.stop('SceneMain');
-            this.scene.restart('SceneTitle');
-            this.scene.resume();
-            this.time.addEvent({
-                callback: function() {this.scene.resume();this.scene.start('SceneTitle');},
-                callbackScope: this,
-                loop: false,
-                delay: 2000
-            }, this);
+        // pause functionality
+        //
+        let txtPause = this.add.text(0,0, 'PAUSED', {
+            fontSize: this.grid.cellHeight/2,
+            color: '#fff'
+        }).setOrigin(0.5, 0.5).setDepth(1).setVisible(false);
+        this.grid.placeAtIndex(22, txtPause);
+        this.input.on('pointerdown', function() {
+            if (!this.isPausedPhysics) {
+                this.isPausedPhysics = true;
+                txtPause.setVisible(true);
+                this.physics.pause();
+            } else {
+                this.isPausedPhysics = false;
+                txtPause.setVisible(false);
+                this.physics.resume();
+            }
         }, this);
-
-        this.bombNumber = 0;
-        this.switchDropped = true;
     }
     
     update ()
     {
-        
-        //if (this.switchLevel) {
-            if (!this.switchDropped && this.bombNumber == this.maxBombs) {
-                this.aircraft.setVelocityX(0);
-            } else {
-                this.aircraft.setVelocityX(this.level * 50);
-                if (!this.switchDropped && this.aircraft.x >= this.bombCoords[this.bombNumber][0]) {
-                    this.switchDropped = true;
-                    dropBomb(this.bombCoords[this.bombNumber][0], this.bombCoords[this.bombNumber][1], this.bombNumber);
-                    this.bombNumber++;
-                }
+        // play again button for the game ending
+        const btnPlayAgain = this.add.text(0,0,'Play Again', {
+            fontSize: Math.min(this.grid.cellHeight, this.grid.cellWidth)/2
+        }).setOrigin(.5,.5).setInteractive().setVisible(false);
+        this.grid.placeAtIndex(67, btnPlayAgain);
+        btnPlayAgain.on('pointerdown', function() {
+            this.scene.restart();
+        }, this);
+    
+        // aircraft movement + dropping bombs
+        //
+        if (!this.isBombDropped && this.bombNumber == this.maxBombs) {
+            this.aircraft.setVelocityX(0);
+        } else {
+            this.aircraft.setVelocityX(this.level * 50 + this.initialSpeed);
+            if (!this.isBombDropped && this.aircraft.x >= this.bombCoords[this.bombNumber][0]) {
+                this.isBombDropped = true;
+                this.dropBomb(this.bombCoords[this.bombNumber][0], this.bombCoords[this.bombNumber][1], this.bombNumber);
+                this.bombNumber++;
             }
-            
-            if (this.aircraft.x >= this.grid.width + 100) {
-                if (this.switchLevel) {
-                    this.aircraft.x = -100;
-                    this.switchDropped = false;
-                    
-                }
-            }
-            
-        //}
-
-        if (this.bombNumber == this.maxBombs && bombs.length == 0) {
-            this.level++;
-            this.bombNumber = 0;
-            this.level_initiate(this.level);
         }
-
-        // if (this.lives == 2) {
-        //     this.life1.destroy();
-        // } else if (this.lives == 1) {
-        //     this.life2.destroy();
-        // } else if (this.lives == 0) {
-        //     this.life3.destroy();
-        //     console.log('Game Over!');
-        //     this.grid.placeAtIndex(37, this.add.text(0,0,'Game Over'));
-        //     //this.buttonPlayAgain.setVisible(true);
-        //     //this.lives=3;
-        //     //this.scene.pause('SceneMain');
-        //     this.scene.stop('SceneMain');
-        //     this.scene.restart('SceneTitle');
-            
-        // }
+        //
+        if (this.aircraft.x >= this.grid.width + 100) {
+            if (this.switchLevel) {
+                this.aircraft.x = -100;
+                this.isBombDropped = false;
+            }
+        }
+        // 
+        if (this.bombNumber == this.maxBombs && bombs.length == 0) {
+            if (this.level == 10) {
+                // Player Won!
+                const txtYouWon = this.add.text(0,0,'You Won!', {
+                    fontSize: Math.min(this.grid.cellHeight, this.grid.cellWidth)
+                }).setOrigin(.5,.5);
+                this.grid.placeAtIndex(22, txtYouWon);
+                btnPlayAgain.setVisible(true);
+                this.physics.pause();
+            } else {
+                this.level++;
+                this.bombNumber = 0;
+                this.level_initiate(this.level);
+            }
+        }
+        //
+        if (this.lives == 2) {
+             this.life1.destroy();
+        } else if (this.lives == 1) {
+            this.life2.destroy();
+        } else if (this.lives == 0) {
+            this.life3.destroy();
+            // Player Lost!
+            const txtGameOver = this.add.text(0,0,'Game Over', {
+                fontSize: Math.min(this.grid.cellHeight, this.grid.cellWidth)
+            }).setOrigin(.5,.5);
+            this.grid.placeAtIndex(22, txtGameOver);
+            btnPlayAgain.setVisible(true);
+            this.physics.pause();
+        }
     }
 
     level_initiate(level) {
         this.switchLevel = false;
-        this.textLevel = this.add.text(0,0,'Level ' + level).setOrigin(.5, .5);
+        this.textLevel = this.add.text(0,0,'Level ' + level, {
+            fontSize: Math.min(this.grid.width * 0.1, this.grid.height * 0.1)
+        }).setOrigin(.5, .5);
         this.grid.placeAtIndex(37, this.textLevel);
         this.physics.pause();
 
@@ -178,66 +187,58 @@ class SceneMain extends Phaser.Scene {
     level_run() {
         this.physics.resume();
         this.textLevel.destroy();
-        //this.aircraft.x = -100;
         this.switchLevel = true;
         this.bombCoords = [];
         for (let i = 0; i < this.maxBombs; i++) {
-            let x = Phaser.Math.RND.integerInRange(50,750);
-            let y = 60;
+            let x = Phaser.Math.RND.integerInRange(50 , this.grid.width - 50);
+            let y = this.grid.cellHeight * 3/2;
             this.bombCoords.push([x,y]);
         }
-        //console.log(this.bombCoords);
     }
 
+    dropBomb(x, y, index) {
+        let x_coord = x;
+        let y_coord = y;
+        let letter = random_char();
+        letters.push(letter);
+        const bomb = game.scene.scenes[1].physics.add.image(x_coord, y_coord, 'bomb');
+        bomb.setScale((this.grid.cellWidth/2)/32, (this.grid.cellHeight/2)/32).setAngle(180);
+        bomb.setOrigin(0.5, .5);
+        bomb.letter = letter;
+        bomb.index = index;
+        //        
+        const textObj = game.scene.scenes[1].add.text(x_coord, this.grid.cellHeight , letter, {
+            fontSize: bomb.displayWidth
+        }).setOrigin(.5, .5);
+        
+        bombs.push([bomb, textObj]);
+        bomb.setGravity(0, 50);
+        game.scene.scenes[1].physics.add.existing(textObj);
+        textObj.body.setGravity(0, 50);
     
+        game.scene.scenes[1].physics.add.collider(bomb, game.scene.scenes[1].ground, this.explode);
+    }
+    
+    explode(bomb, ground) {
+        const explosion = game.scene.scenes[1].physics.add.sprite(bomb.x, bomb.y, 'exploion');
+        explosion.setGravity(0, 50);
+        explosion.anims.play('explode');
+        game.scene.scenes[1].explosionSound.play();
+        for (let i = 0; i < bombs.length; i++) {
+            if (bombs[i][0].index == bomb.index) {
+                bombs.splice(i, 1);
+            }
+        }
+        bomb.destroy();
+        game.scene.scenes[1].lives--;
+        console.log(bombs);
+    }
 }
-
-
 
 var letters = [];
 var bombs = [];
 
-function dropBomb(x, y, index) {
-    let x_coord = x;
-    let y_coord = y;
-    let letter = random_char();
-    letters.push(letter);
-    let bomb = game.scene.scenes[1].physics.add.image(x_coord, y_coord, 'bomb').setAngle(180);
-    bomb.letter = letter;
-    bomb.index = index;
-    
-    
-    let textObj = game.scene.scenes[1].add.text(x_coord-5, 22, letter, {
-        font:"20px"
-    });
-    
-    //let letteredBomb = game.scene.scenes[1].physics.add.group();
-    //letteredBomb.add(bomb);
-    //letteredBomb.add(textObj);
-    //game.scene.scenes[1].groupBombs.add(letteredBomb);
-    bombs.push([bomb, textObj]);
-    bomb.setGravity(0, 50);
-    game.scene.scenes[1].physics.add.existing(textObj);
-    textObj.body.setGravity(0, 50);
 
-    //bomb.setBounce(0.8);
-    game.scene.scenes[1].physics.add.collider(bomb, game.scene.scenes[1].ground, explode);
-    console.log(bombs);
-}
-
-function explode(bomb, ground) {
-    explosion = game.scene.scenes[1].physics.add.sprite(bomb.x, bomb.y, 'exploion');
-    explosion.anims.play('explode');
-    game.scene.scenes[1].explosionSound.play();
-    for (let i = 0; i < bombs.length; i++) {
-        if (bombs[i][0].index == bomb.index) {
-            bombs.splice(i, 1);
-        }
-    }
-    bomb.destroy();
-    game.scene.scenes[1].lives--;
-    console.log(bombs);
-}
 
 function random_char() {
     let characterString = 'abcdefghijklmnopqrstuvwxyz';
