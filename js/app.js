@@ -20,4 +20,5 @@ window.onload = function()
         }
     };
     game = new Phaser.Game(config);
+    isMobile = navigator.userAgent.indexOf("Mobile") == -1 ? false : true;
 }

@@ -68,13 +68,6 @@ class SceneTitle extends Phaser.Scene {
             grd.addColorStop(0, '#777'); grd.addColorStop(0.4, '#fff');grd.addColorStop(1, '#777');
             txtTitle.setFill(grd);
             //
-            // title music
-            this.titleMusic = this.sound.add('title_music', {
-                volume: 0.5,
-                loop: true
-            });
-            //this.titleMusic.play();
-            //
             // title scene buttons
             let buttonStart = this.add.text(width * .33, height * .5, 'START').setOrigin(.5, .5).setInteractive();
             let buttonCredits = this.add.text(width * .66, height * .5, 'CREDITS').setOrigin(.5, .5).setInteractive()
@@ -109,7 +102,14 @@ class SceneTitle extends Phaser.Scene {
         this.load.audio('title_music', 'POL-strategic-war-short.wav');
     }
 
-    create() {}
+    create() {
+        // title music
+        this.titleMusic = this.sound.add('title_music', {
+            volume: 0.5,
+            loop: true
+        });
+        this.titleMusic.play();
+    }
 
     update() {}
 }

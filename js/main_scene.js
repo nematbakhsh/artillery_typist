@@ -40,15 +40,20 @@ class SceneMain extends Phaser.Scene {
         this.ground.body.setOffset(0, this.grid.cellHeight * .4);
         this.ground.body.setSize(this.grid.width, 20, false);
         //
-        this.life1 = this.add.image(0,0,'heart').setScale(Math.min((this.grid.cellWidth/2)/32, (this.grid.cellHeight/2)/32));
-        this.life2 = this.add.image(0,0,'heart').setScale(Math.min((this.grid.cellWidth/2)/32, (this.grid.cellHeight/2)/32));
-        this.life3 = this.add.image(0,0,'heart').setScale(Math.min((this.grid.cellWidth/2)/32, (this.grid.cellHeight/2)/32));
+        this.life1 = this.add.image(0,0,'heart').setScale(Math.min((this.grid.cellWidth)/32, (this.grid.cellHeight)/32));
+        this.life2 = this.add.image(0,0,'heart').setScale(Math.min((this.grid.cellWidth)/32, (this.grid.cellHeight)/32));
+        this.life3 = this.add.image(0,0,'heart').setScale(Math.min((this.grid.cellWidth)/32, (this.grid.cellHeight)/32));
         this.grid.placeAtIndex(12, this.life1);
         this.grid.placeAtIndex(13, this.life2);
         this.grid.placeAtIndex(14, this.life3);
         //
         this.aircraft = this.physics.add.image(this.grid.width+200, this.grid.cellHeight, 'aircraft');
-        this.aircraft.setScale(Math.min((this.grid.cellWidth)/800, (this.grid.cellHeight)/469));
+        if (isMobile) {
+            this.aircraft.setScale(Math.max((this.grid.cellWidth)/800, (this.grid.cellHeight)/469)/2);
+        } else {
+            this.aircraft.setScale(Math.min((this.grid.cellWidth)/800, (this.grid.cellHeight)/469));
+        }
+        
         //v
         this.anims.create({
             key: 'explode',
@@ -226,12 +231,15 @@ class SceneMain extends Phaser.Scene {
         game.scene.scenes[1].explosionSound.play();
         for (let i = 0; i < bombs.length; i++) {
             if (bombs[i][0].index == bomb.index) {
+                bombs[i][1].destroy();
                 bombs.splice(i, 1);
             }
         }
         bomb.destroy();
         game.scene.scenes[1].lives--;
-        console.log(bombs);
+        explosion.on('animationcomplete', function() {
+            this.destroy();
+        })
     }
 }
 
