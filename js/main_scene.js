@@ -40,14 +40,14 @@ class SceneMain extends Phaser.Scene {
         this.ground.body.setOffset(0, this.grid.cellHeight * .4);
         this.ground.body.setSize(this.grid.width, 20, false);
         //
-        this.life1 = this.add.image(0,0,'heart').setScale(Math.min((this.grid.cellWidth)/32, (this.grid.cellHeight)/32));
-        this.life2 = this.add.image(0,0,'heart').setScale(Math.min((this.grid.cellWidth)/32, (this.grid.cellHeight)/32));
-        this.life3 = this.add.image(0,0,'heart').setScale(Math.min((this.grid.cellWidth)/32, (this.grid.cellHeight)/32));
+        this.life1 = this.add.image(0,0,'heart').setScale(Math.min((this.grid.cellWidth)/125, (this.grid.cellHeight)/125));
+        this.life2 = this.add.image(0,0,'heart').setScale(Math.min((this.grid.cellWidth)/125, (this.grid.cellHeight)/125));
+        this.life3 = this.add.image(0,0,'heart').setScale(Math.min((this.grid.cellWidth)/125, (this.grid.cellHeight)/125));
         this.grid.placeAtIndex(12, this.life1);
         this.grid.placeAtIndex(13, this.life2);
         this.grid.placeAtIndex(14, this.life3);
         //
-        this.aircraft = this.physics.add.image(this.grid.width+200, this.grid.cellHeight, 'aircraft');
+        this.aircraft = this.physics.add.image(this.grid.width+200, this.grid.cellHeight, 'aircraft').setDepth(2);
         if (isMobile) {
             this.aircraft.setScale(Math.max((this.grid.cellWidth)/800, (this.grid.cellHeight)/469)/2);
         } else {

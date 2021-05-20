@@ -88,18 +88,17 @@ class SceneTitle extends Phaser.Scene {
         //}
         //
         // all game assets
-        this.load.image('sky', 'sky.png');
         this.load.image('ground', 'ground.png');
         this.load.image('aircraft', 'airship.png');
         this.load.image('bomb', 'missile.png');
-        this.load.image('heart', 'corazon.png');
+        this.load.image('heart', 'heart.png');
         this.load.spritesheet('explosion', 
             'explosion.png',
             { frameWidth: 96, frameHeight: 96 }
         );
         this.load.audio('explosion_sound', 'Chunky_Explosion.mp3');
         this.load.audio('win_sound', 'Picked_Coin_Echo_2.wav');
-        this.load.audio('title_music', 'POL-strategic-war-short.wav');
+        this.load.audio('title_music', 'S31-Puppet_Warehouse.ogg');
     }
 
     create() {
