@@ -2,7 +2,7 @@
 
 Artillery Typist Copyright © 2021 Amin Nematbakhsh
 
-This a simple game for learning keyboard keys to kids.
+This a simple game for teaching keyboard keys to kids.
 This product is written by the Phaser.js library.
 
 ---
